@@ -1,0 +1,18 @@
+# Dependencies and generated output
+node_modules/
+cdk.out/
+dist/
+.build/
+.DS_Store
+DerivedData/
+xcuserdata/
+*.xcuserstate
+# Private configuration (including local variants and backup copies).
+# Only the placeholder template is safe to commit.
+.env*
+!.env.example
+ios/FitnessChallenge/Config.local.plist
+coverage/
+
+# Local Vercel project configuration
+.vercel/

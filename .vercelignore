@@ -1,0 +1,8 @@
+# Never upload local credentials, including backup copies.
+.env*
+!.env.example
+node_modules/
+.build/
+cdk.out/
+coverage/
+docs/preview*.jpg

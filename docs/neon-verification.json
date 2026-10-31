@@ -1,0 +1,23 @@
+{
+  "checkedAt": "2026-10-31T00:12:04.506Z",
+  "database": "fitness_challenge",
+  "provider": "Neon",
+  "runtimeRole": "fitness_challenge_app",
+  "runtimeHasDDL": false,
+  "checks": [
+    "registration",
+    "httpOnly_cookie_sessions",
+    "private_membership",
+    "invitations",
+    "manual_activity",
+    "shortcut_ingest",
+    "daily_snapshot_idempotency",
+    "preserve_workout",
+    "persistence_in_new_runtime",
+    "credential_revocation",
+    "logout_revokes_session"
+  ],
+  "temporaryTestAccountsRemoved": true,
+  "deployedToVercel": false,
+  "iPhoneHealthReadValidated": false
+}
