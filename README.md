@@ -9,6 +9,8 @@ Solo dos destinos:
 - **Mis retos:** crear un reto con nombre, duración (1–31 días) y premio de texto. El creador queda dentro automáticamente. Comparte un enlace; la otra persona entra, ve la invitación y pulsa **Unirme al reto**. Clasificación privada por pasos y seis frases por escenario (en cabeza, detrás, empate, sin datos, recta final…).
 - **Mi perfil:** código privado para Atajos y pasos personales por día, semana (lunes a domingo) o mes natural. El historial no se suma por reto. Cero es un dato; «—» significa que falta recibirlo.
 
+UI minimalista: pasos y premio al frente, tipografía ampliada y opciones secundarias bajo demanda. Perfil abre el día actual; el código está en **Mi perfil → Atajos y código**.
+
 UI mobile-first con navegación inferior, áreas seguras, campos de 16 px, gestos del navegador, estados vacíos y movimiento reducido. La demo es explícita, ficticia y solo vive en memoria; nunca sustituye silenciosamente datos reales que fallaron. Sin dashboard ni controles de entrenamiento en esta versión.
 
 ## Cuando termina un reto
@@ -127,7 +129,7 @@ La herramienta `neon:verify -- --allow-test-writes` es opt-in y escribe/elimina 
 ## Límites del piloto
 
 - Email/contraseña con mínimo 12 caracteres. Sin verificación ni recuperación de correo todavía: no habilitar registro público masivo antes de añadir esos flujos.
-- No lectura directa de Salud desde la PWA ni garantía de ejecución cada diez minutos, teléfono bloqueado o sin red. No hay cola offline. El fallo intermitente de conexión de Shortcuts debe retestearse; simplificar la petición no demuestra que desapareció.
+- No lectura directa de Salud desde la PWA ni garantía de ejecución cada diez minutos, teléfono bloqueado o sin red. No hay cola offline. El usuario confirmó un envío desde iPhone a `/api/steps`; aún deben validarse fuentes, automatizaciones y otros contextos de red.
 - Solo pasos en UI; no se certifica origen Watch ni antifraude. Validar fuentes para no contar el mismo paseo dos veces.
 - Salir/eliminar un reto conserva historial personal; borrar datos de app revoca código y elimina historial, pero conserva cuenta de acceso (nombre/email/password). El borrado completo de cuenta requiere al responsable verificado del piloto.
 - No publicidad ni analítica de terceros. Antes de invitar públicamente: contacto, privacidad, retención y flujo de baja. La retención de copias Neon depende del plan y debe documentarse por el responsable.

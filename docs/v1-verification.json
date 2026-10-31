@@ -1,12 +1,12 @@
 {
-  "checkedAt": "2026-10-31T20:35:34.645172+00:00",
-  "version": "challenge-first-v1",
+  "checkedAt": "2026-10-31T21:07:39.358306+00:00",
+  "version": "minimal-ui-v2",
   "database": "fitness_challenge",
   "migration": "003_challenge_results.sql",
   "migrationApplied": true,
   "runtimeRole": "fitness_challenge_app",
   "runtimeHasDDL": false,
-  "unitTests": 134,
+  "unitTests": 139,
   "postgresIntegrationTests": 30,
   "httpSmokes": [
     "legacy",
@@ -16,7 +16,7 @@
   "browserQA": "local-disposable-postgres-and-explicit-fictional-demo",
   "responsiveClientWidth": 390,
   "deployedNewVersionToVercel": false,
-  "iPhoneSimpleSyncValidated": false,
+  "iPhoneSimpleSyncValidated": true,
   "migrationBackfillsExistingPersonalSnapshots": true,
   "realUserActivityFetchedOrDisplayed": false,
   "completion": {
@@ -26,5 +26,15 @@
     "receiptIdempotent": true,
     "prizeDefault": "coordinate",
     "motionReducedSupported": true
+  },
+  "iPhoneHealthTotalAccuracyValidated": false,
+  "responsiveMinimumChecked": 320,
+  "productionDeploymentVerifiedAtCheck": false,
+  "minimalUI": {
+    "profileDefaultPeriod": "day",
+    "visibleSecondaryActionsCollapsed": true,
+    "nameFontPxMobile": 17,
+    "stepsFontPxMobile": 31,
+    "secondaryFontPxMobile": 14
   }
 }

@@ -14,18 +14,18 @@ const view = (board: Board, userId = 'alice') => renderToStaticMarkup(<Completed
 describe('completed challenge interaction surfaces', () => {
   it('shows a permanent result, named prize handoff, receipt action and opt-in rematch', () => {
     const html = view(make());
-    for (const label of ['Este reto es tuyo.', 'Así quedó la historia.', 'LO PREPARA', 'LO DISFRUTA', 'Ya recibí mi premio', 'Preparar la revancha', 'Retos terminados']) expect(html).toContain(label);
+    for (const label of ['Este reto es tuyo.', 'Resultado final', 'Entrega', 'Recibe', 'Ya recibí mi premio', 'Preparar la revancha', 'Retos terminados']) expect(html).toContain(label);
     expect(html).not.toContain('<dialog'); expect(html).not.toContain('autoplay');
   });
   it('does not offer the receipt button to the payer and shows who receives instead', () => {
     const html = view(make(), 'bob');
     expect(html).not.toContain('Ya recibí mi premio');
-    expect(html).toContain('Te toca un bonito cierre'); expect(html).toContain('Alice se lleva el primer puesto.');
+    expect(html).toContain('Te toca entregar'); expect(html).toContain('Alice se lleva el primer puesto.');
   });
   it('shows received status without any further claim action', () => {
     const board = make(); board.result = { ...board.result!, receivedAt: '2026-10-31T14:00:00Z', receivedBy: 'alice' };
     const html = view(board);
-    expect(html).toContain('Buen plan, cumplido.'); expect(html).toContain('Confirmaste la recepción'); expect(html).not.toContain('Ya recibí mi premio');
+    expect(html).toContain('Recibido el'); expect(html).toContain('role="status"'); expect(html).not.toContain('Ya recibí mi premio');
   });
   it('escapes prize and names rather than rendering executable content', () => {
     const board = make(); board.challenge.prize = '<script>alert(1)</script>'; board.rows[0]!.displayName = '<img src=x onerror=alert(1)>';
@@ -34,14 +34,14 @@ describe('completed challenge interaction surfaces', () => {
   it('does not crown the remaining participant after a privacy withdrawal', () => {
     const board = make(); board.result = { ...board.result!, winnerUserIds: ['removed-test'], hasRedactions: true };
     board.rows[0] = { userId: 'removed-test', displayName: 'Participante que salió', steps: null, workoutSeconds: null, days: [], redacted: true };
-    const html = view(board, 'bob'); expect(html).not.toContain('Bob se lleva el primer puesto'); expect(html).not.toContain('Ya recibí mi premio'); expect(html).toContain('sin volver a decidir quién ganó');
+    const html = view(board, 'bob'); expect(html).not.toContain('Bob se lleva el primer puesto'); expect(html).not.toContain('Ya recibí mi premio'); expect(html).toContain('No se reasigna la victoria');
   });
   it('offers explicit prize rules at creation and repeats them before joining', () => {
     const form = renderToStaticMarkup(<CreateChallenge today="2026-10-31" busy={false} onCreate={noop} />);
-    expect(form).toContain('El premio lo pone'); expect(form).toContain('value="coordinate" selected');
+    expect(form).toContain('¿Quién invita?'); expect(form).toContain('value="coordinate" selected');
     const board = make(), preview: InvitePreview = { challenge: board.challenge, creator: { displayName: 'Alice' }, members: [{ displayName: 'Alice' }] };
     const invite = renderToStaticMarkup(<JoinChallenge preview={preview} busy={false} onJoin={noop} />);
-    expect(invite).toContain('Quienes no ganan se organizan para entregar un solo premio'); expect(invite).toContain('aceptas la regla del premio');
+    expect(invite).toContain('Quienes no ganan entregan un solo premio'); expect(invite).toContain('aceptas la regla del premio');
   });
   it('limits celebration to transforms/opacity with reduced-motion equivalent and no loops', () => {
     const css = readFileSync(new URL('../src/styles.css', import.meta.url), 'utf8');

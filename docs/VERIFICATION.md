@@ -57,3 +57,15 @@ El código de usuario sustituye la ubicación de la credencial, no elimina su se
 - Celebración decorativa sin bucles, transform/opacity260ms con pequeños desfases, una vez por sesión en memoria y repetible a petición. No modal ni bloqueo de lectura; reduced-motion estático. Física iPhone sigue pendiente.
 - Decisiones de diseño: resultado → reconocimiento → premio → siguiente reto. Referencias primarias: [Apple HIG Motion](https://developer.apple.com/design/human-interface-guidelines/motion) y [Feedback](https://developer.apple.com/design/human-interface-guidelines/feedback): movimiento intencional, breve, opcional, información de estado junto al elemento afectado.
 - Historial append-only no tiene compactación automática en este piloto; consulta de cierre acotada a las fechas del reto. Revisar retención antes de abrir al público.
+
+## Ajuste minimalista — 31 de octubre de 2026
+
+Petición del usuario: menos texto/opciones y letras grandes. Se quitaron intro/editorial y tarjeta duplicada de creación, ilustraciones grandes de retos activos, captions repetidos, párrafos de cierre y acciones de gestión visibles permanentemente. Datos principales: premio, clasificación, pasos y entrega. Un mensaje corto (seis variantes por escenario activo, menos de55caracteres), sin repetir el premio.
+
+Perfil inicia en Día, número76px, historial semanal/mensual disponible. Código/Atajos y Cuenta están plegados; guía actualizada. Copiar código sigue protegido, no se imprime el valor privado en markup. Configuración/rotación en segundo nivel. Creación simplificada con un campo duración1–31, premio/regla explícita y consentimiento conservados. Confirmación de premio y resultado/empates/privacidad no cambian.
+
+139pruebas unitarias13archivos,30integracionesPG y ambossmokesHTTP; cinco pruebas nuevas de densidad/estructura/privacidad/copy. Tipos/build/rewritechecks/audit comprobados. Sin cambios de backend, dependencias, variables, DB ni migraciones.
+
+QA de navegador con demo ficticia: lista, detalle activo, perfil Día/Semana/Mes, Atajos plegado/desplegado, final y confirmación de recibido.390CSS y320CSS sin overflow; pasos31px/nombres17px/secundarios14px en390. Controles44px o más. Capturas preview-minimal-*.png. Reduced-motion y safeareas siguen presentes. Esta prueba no sustituye probar tacto/teclado/zoom en iPhone real.
+
+El usuario confirmó que el envío de Shortcuts funciona al usar /api/steps; aún no certifica exactitud multi-fuente iPhone/Watch ni automatización.

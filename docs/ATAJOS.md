@@ -1,6 +1,6 @@
 # Atajos para Ritmo — versión simple de pasos
 
-Esta guía corresponde a la nueva experiencia **Mis retos / Mi perfil**. Primero debe estar desplegada esta versión y aplicada la migración `002_simple_steps.sql`. La lectura de pasos ya mostró un valor coherente en el iPhone del usuario; el envío completo de esta versión todavía debe comprobarse en ese teléfono. Simplificar la petición no certifica haber resuelto el error intermitente de red de iOS.
+Esta guía corresponde a la nueva experiencia **Mis retos / Mi perfil**. La versión está desplegada con el esquema hasta003. El usuario confirmó el envío desde su iPhone al cambiar la URL a `/api/steps`. Falta comprobar la exactitud del total de Salud y las automatizaciones; no se generaliza esa prueba a todas las conexiones o dispositivos.
 
 ## Qué se envía
 
@@ -21,7 +21,7 @@ El servidor calcula la fecha al recibirlo, usando la zona horaria guardada por l
 
 1. Entra a [Ritmo](https://ritmo.eduzsantillan.com), crea tu cuenta o inicia sesión.
 2. Abre **Mi perfil**. La app guarda automáticamente la zona del navegador si el perfil todavía no tiene una.
-3. En **Tu código de usuario**, toca **Copiar mi código**.
+3. Despliega **Atajos y código** y toca **Copiar mi código**.
 4. Es privado: quien lo tenga puede actualizar tus pasos, no leer tu cuenta. Cada participante utiliza el suyo, incluso si está en varios retos.
 
 No lo envíes por chat ni lo publiques dentro de una plantilla compartida. Si lo compartiste por error, usa **Renovar mi código** y actualiza el atajo. La demo nunca genera códigos reales.
