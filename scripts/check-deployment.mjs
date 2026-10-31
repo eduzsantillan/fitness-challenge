@@ -6,7 +6,13 @@ const config = JSON.parse(readFileSync('vercel.json', 'utf8')), pkg = JSON.parse
 assert.equal(config.framework, 'vite'); assert.equal(config.outputDirectory, 'dist');
 assert.equal(config.installCommand, 'npm ci --include=dev');
 for (const name of ['@types/node', '@types/pg']) assert.ok(pkg.dependencies[name], `${name} must remain available when the API is compiled with production dependencies`);
-assert.ok(config.rewrites.every(r => !new RegExp(`^${r.source}$`).test('/api/shortcuts')), 'SPA must not swallow API routes');
+const resolveRewrite = path => config.rewrites.find(r => new RegExp(`^${r.source}$`).test(path))?.destination;
+for (const path of ['/api/status', '/api/session', '/api/auth/sign-up/email', '/api/auth/sign-in/email', '/api/auth/sign-out', '/api/challenges/id/leaderboard', '/api/challenges/id/activity', '/api/challenges/id/connection', '/api/challenges/id/invites', '/api/shortcuts']) {
+  assert.equal(resolveRewrite(path), '/api', `Nested API route must reach the single function: ${path}`);
+}
+assert.ok(!config.rewrites.filter(r => r.destination === '/index.html').some(r => new RegExp(`^${r.source}$`).test('/api')), 'SPA must not swallow the API function destination');
+assert.equal(resolveRewrite('/settings'), '/index.html');
+assert.ok(existsSync('api/index.ts') && !existsSync('api/[...path].ts'), 'Use a fixed function entry, not a Next.js-only multi-segment catch-all');
 assert.ok(!Object.keys({ ...pkg.dependencies, ...pkg.devDependencies }).some(k => /aws|cdk|constructs/.test(k)));
 const csp = config.headers.flatMap(g => g.headers).find(h => h.key === 'Content-Security-Policy').value;
 assert.ok(csp.includes("connect-src 'self';")); assert.ok(!csp.includes('amazon'));
@@ -25,7 +31,7 @@ if (existsSync('.env')) {
     }
   }
 }
-await build({ entryPoints: ['api/[...path].ts'], bundle: true, platform: 'node', target: 'node22', format: 'esm', packages: 'external', outfile: '.build/api.mjs' });
+await build({ entryPoints: ['api/index.ts'], bundle: true, platform: 'node', target: 'node22', format: 'esm', packages: 'external', outfile: '.build/api.mjs' });
 const entry = await import('../.build/api.mjs');
 assert.equal(typeof entry.default.fetch, 'function');
 console.log('Deployment checks passed: Vercel API entry bundles, SPA excludes /api, same-origin CSP, private PWA cache and no AWS dependencies.');

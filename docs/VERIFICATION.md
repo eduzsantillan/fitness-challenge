@@ -23,6 +23,10 @@
 
 El usuario ya publicó `https://ritmo.eduzsantillan.com`. Comprobación GET del 31 de octubre de 2026: `/api/status` y `/api/session` devuelven JSON HTTP 503 con `configured: false`. Falta confirmar/corregir variables de Production y redesplegar; no se probaron registro ni escrituras en este dominio y no se cambió configuración remota. `neon-verification.json` conserva el estado histórico de su ejecución anterior, no certifica este despliegue.
 
+Actualización posterior del mismo día: status/session ya responden HTTP 200 y la API confirma configuración. `npx vercel logs requests` muestra `pathType: not_found` en rutas anidadas mientras las simples llegan a la función. Una sonda POST `{}` (sin email, contraseña ni creación de cuenta) en `/api/auth/sign-up/email` devuelve 404 de plataforma; también falla `/api/challenges/example/leaderboard`. Se reemplazó localmente `[...path].ts` por `api/index.ts` y se añadió rewrite explícita de todos los niveles `/api/*`. El verificador comprueba que registro/login/retos/Atajos resuelven a la función y la SPA no intercepta ni siquiera `/api` raíz. Check completo sigue pasando (40 unitarias + 12 integraciones, smoke HTTP y build); pendiente redesplegar y verificar enrutamiento real, registro y cookies.
+
+Para consultar sin vincular ni modificar el proyecto: `npx vercel logs requests --project fitness-challenge --scope eduzsantillans-projects --environment production --since 15m --json`. En esta cuenta Hobby una ventana de 1 hora excedía la retención disponible. Las peticiones 404 no generan logs de función porque nunca la invocan.
+
 1. La base Neon y las migraciones **ya están listas**. Falta configurar las variables privadas en Vercel usando únicamente el rol de runtime, nunca la conexión de migraciones.
 2. Publicar proyecto completo en Vercel, con su dominio y APP_ORIGIN exacto, y comprobar funciones y cookies en HTTPS del despliegue real.
 3. Probar flujo entre dos iPhones/cuentas, invitaciones y revocación contra el dominio público.

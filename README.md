@@ -73,7 +73,7 @@ La conexión remota verifica certificados TLS. No desactives la verificación SS
 
 1. La base Neon ya está preparada. Usa el `DATABASE_URL` limitado del `.env` de Ritmo, no el de date-app ni la conexión de migraciones. Si configuras otra base, aplica `npm run db:migrate` explícitamente antes.
 2. Importa este repositorio completo en Vercel. **Root Directory = raíz del repositorio**, no `web/` ni `dist/`.
-3. Selecciona preset **Vite**, Node.js **22.x**, Build Command **`npm run build`**, Output Directory **`dist`**. La API vive en `api/[...path].ts` fuera del directorio estático.
+3. Selecciona preset **Vite**, Node.js **22.x**, Build Command **`npm run build`**, Output Directory **`dist`**. La API vive en `api/index.ts` fuera del directorio estático. `vercel.json` envía explícitamente todas las rutas `/api/*`, también las anidadas de registro y retos, a esa función.
 4. Añade en **Settings → Environment Variables → Production**: `DATABASE_URL`, `APP_ORIGIN`, `BETTER_AUTH_SECRET`, `PG_POOL_MAX`.
    **No añadas `MIGRATION_DATABASE_URL`**, no subas `.env` y no copies la credencial administrativa de date-app. `.vercelignore` excluye archivos privados del envío por CLI.
 5. Añade tu dominio en **Settings → Domains**, configura el DNS que indique Vercel y pon ese mismo origen HTTPS en `APP_ORIGIN`.
@@ -162,7 +162,7 @@ El build de Vercel no necesita PostgreSQL local: usa `npm run build`, no `npm ru
 ## Estructura
 
 - `web/src/`: panel, acceso, demo y cliente same-origin.
-- `api/[...path].ts`: única entrada de Vercel para la API.
+- `api/index.ts`: única entrada fija de Vercel para la API, con rewrite explícita de `/api/*`.
 - `backend/src/`: Better Auth, servicio de retos, repositorio PostgreSQL, límites y migraciones.
 - `db/`: migraciones SQL versionadas.
 - `backend/tests/`, `backend/integration/`, `web/tests/`: pruebas.

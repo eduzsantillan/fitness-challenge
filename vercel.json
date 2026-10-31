@@ -5,7 +5,11 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
-      "source": "/((?!api/|assets/|icons/|manifest.webmanifest|sw.js|guia-atajos.md|robots.txt).*)",
+      "source": "/api/(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/((?!api(?:/|$)|assets/|icons/|manifest.webmanifest|sw.js|guia-atajos.md|robots.txt).*)",
       "destination": "/index.html"
     }
   ],

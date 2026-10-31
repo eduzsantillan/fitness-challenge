@@ -7,7 +7,7 @@
 - Configuración local guardada en `.env`, ignorada por Git y Vercel, permisos `0600`.
 - Registro, cookies de sesión, invitaciones, dos participantes, actividad manual, envíos de Atajos, persistencia, deduplicación y revocación comprobados contra Neon real.
 - Las cuentas/actividad ficticias de verificación se eliminaron. No se importaron registros de date-app o calle.
-- **Despliegue del usuario:** `https://ritmo.eduzsantillan.com`. Comprobación GET del 31 de octubre de 2026: `/api/status` y `/api/session` devuelven JSON HTTP 503 con `configured: false`. La API está publicada pero no confirmó su configuración. Revisar variables de Production y usar `APP_ORIGIN=https://ritmo.eduzsantillan.com` sin barra final antes de redesplegar; este aviso no requiere crear otra base.
+- **Despliegue del usuario:** `https://ritmo.eduzsantillan.com`. Última comprobación del 31 de octubre de 2026: `/api/status` y `/api/session` ya responden HTTP 200 (`configured: true`, sesión anónima), resuelto el 503 inicial. Los registros de peticiones de Vercel y sondas sin credenciales muestran HTTP 404 de plataforma en rutas anidadas de registro/retos. Corregido localmente con `api/index.ts` y rewrite explícita `/api/(.*)` → `/api`; falta publicar esta corrección y confirmar registro. Mantener `APP_ORIGIN=https://ritmo.eduzsantillan.com` sin barra final; no recrear Neon.
 - **Pendiente:** confirmar configuración/sesiones reales en Vercel y probar Salud en el iPhone.
 
 No incluimos conexiones, contraseñas, endpoints privados ni secretos en este documento.

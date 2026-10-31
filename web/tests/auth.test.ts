@@ -14,6 +14,27 @@ describe('same-origin cookie sessions', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({ configured: false }, 503)));
     const auth = await import('../src/auth'); await auth.initialize(); expect(auth.session()).toBeUndefined(); expect(auth.configured).toBe(false);
   });
+  it('reports a missing API route instead of claiming that no database exists', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('Not found', { status: 404 })));
+    const auth = await import('../src/auth'); const warning = await auth.initialize();
+    expect(warning).toContain('/api/status (HTTP 404)'); expect(warning).toContain('no significa que tu base de datos no exista');
+    expect(auth.configured).toBe(false); expect(auth.session()).toBeUndefined();
+  });
+  it('does not accept HTML or an unrelated JSON response as a configured API', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response({ page: 'index' })));
+    const auth = await import('../src/auth'); expect(await auth.initialize()).toContain('/api/status');
+    expect(auth.configured).toBe(false);
+  });
+  it('does not misclassify a session/database error as missing server configuration', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(response({ configured: true })).mockResolvedValueOnce(response({ message: 'No se pudo completar la solicitud.' }, 500)));
+    const auth = await import('../src/auth'); const warning = await auth.initialize();
+    expect(warning).toContain('/api/session (HTTP 500)'); expect(auth.configured).toBe(true); expect(auth.session()).toBeUndefined();
+  });
+  it('can retry initialization after a failed connection', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValueOnce(new TypeError('Failed to fetch')).mockResolvedValueOnce(response({ configured: true })).mockResolvedValueOnce(response({ user: null })));
+    const auth = await import('../src/auth'); expect(await auth.initialize()).toContain('/api/status');
+    expect(await auth.initialize()).toBeUndefined(); expect(auth.configured).toBe(true); expect(auth.session()).toBeUndefined();
+  });
   it('registers with a name, then confirms the server cookie session', async () => {
     const user = { id: 'alice', name: 'Alice', email: 'alice@example.test' };
     const fetch = vi.fn().mockResolvedValueOnce(response({ configured: true })).mockResolvedValueOnce(response({ user: null })).mockResolvedValueOnce(response({ user })).mockResolvedValueOnce(response({ user })); vi.stubGlobal('fetch', fetch);
