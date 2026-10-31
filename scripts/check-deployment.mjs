@@ -4,13 +4,15 @@ import { parseEnv } from 'node:util';
 import { build } from 'esbuild';
 const config = JSON.parse(readFileSync('vercel.json', 'utf8')), pkg = JSON.parse(readFileSync('package.json', 'utf8'));
 assert.equal(config.framework, 'vite'); assert.equal(config.outputDirectory, 'dist');
+assert.equal(config.installCommand, 'npm ci --include=dev');
+for (const name of ['@types/node', '@types/pg']) assert.ok(pkg.dependencies[name], `${name} must remain available when the API is compiled with production dependencies`);
 assert.ok(config.rewrites.every(r => !new RegExp(`^${r.source}$`).test('/api/shortcuts')), 'SPA must not swallow API routes');
 assert.ok(!Object.keys({ ...pkg.dependencies, ...pkg.devDependencies }).some(k => /aws|cdk|constructs/.test(k)));
 const csp = config.headers.flatMap(g => g.headers).find(h => h.key === 'Content-Security-Policy').value;
 assert.ok(csp.includes("connect-src 'self';")); assert.ok(!csp.includes('amazon'));
 const sw = readFileSync('dist/sw.js', 'utf8'); assert.ok(sw.includes("url.pathname.startsWith('/api/')"));
 assert.ok(!readFileSync('web/src/auth.ts', 'utf8').includes('VITE_')); // Server credentials must not become Vite public values.
-const ignored = readFileSync('.vercelignore', 'utf8'); assert.ok(ignored.includes('.env\n') && ignored.includes('.env.*'));
+const ignored = readFileSync('.vercelignore', 'utf8').split(/\r?\n/); assert.ok(ignored.includes('.env*') && ignored.includes('!.env.example'));
 if (existsSync('.env')) {
   const privateEnv = parseEnv(readFileSync('.env', 'utf8'));
   const publicBundle = readdirSync('dist/assets').filter(f => /\.(?:js|css)$/.test(f)).map(f => readFileSync(`dist/assets/${f}`, 'utf8')).join('\n');

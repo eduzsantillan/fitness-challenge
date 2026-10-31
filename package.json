@@ -21,6 +21,8 @@
     "neon:verify": "tsx scripts/verify-neon.ts"
   },
   "dependencies": {
+    "@types/node": "26.6.6",
+    "@types/pg": "8.23.1",
     "better-auth": "1.7.14",
     "lucide-react": "1.65.0",
     "pg": "8.23.1",
@@ -28,8 +30,6 @@
     "react-dom": "19.3.1"
   },
   "devDependencies": {
-    "@types/node": "26.6.6",
-    "@types/pg": "8.23.1",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.2",

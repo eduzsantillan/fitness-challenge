@@ -7,7 +7,8 @@
 - Configuración local guardada en `.env`, ignorada por Git y Vercel, permisos `0600`.
 - Registro, cookies de sesión, invitaciones, dos participantes, actividad manual, envíos de Atajos, persistencia, deduplicación y revocación comprobados contra Neon real.
 - Las cuentas/actividad ficticias de verificación se eliminaron. No se importaron registros de date-app o calle.
-- **Pendiente:** publicación en Vercel con el dominio del usuario y prueba de Salud en el iPhone.
+- **Despliegue del usuario:** `https://ritmo.eduzsantillan.com`. Comprobación GET del 31 de octubre de 2026: `/api/status` y `/api/session` devuelven JSON HTTP 503 con `configured: false`. La API está publicada pero no confirmó su configuración. Revisar variables de Production y usar `APP_ORIGIN=https://ritmo.eduzsantillan.com` sin barra final antes de redesplegar; este aviso no requiere crear otra base.
+- **Pendiente:** confirmar configuración/sesiones reales en Vercel y probar Salud en el iPhone.
 
 No incluimos conexiones, contraseñas, endpoints privados ni secretos en este documento.
 
@@ -43,6 +44,8 @@ En Vercel configura **solo**:
 **Nunca** subas `MIGRATION_DATABASE_URL`, el `.env` completo ni credenciales de date-app. No pegues los valores en el chat. No uses prefijos `VITE_`.
 
 Importa la raíz completa del proyecto: preset Vite, Node 22, build `npm run build`, salida `dist`. Las migraciones ya se aplicaron; no se ejecutan desde el build o por petición. Instrucciones completas en el README.
+
+El comando de instalación está fijado en `vercel.json` como `npm ci --include=dev`: las herramientas de compilación también se necesitan en el build de producción. Las definiciones `@types/node` y `@types/pg` se incluyen además en `dependencies` para que sigan disponibles al compilar las funciones con dependencias de producción. Si aparece `TS2688` al desplegar una revisión antigua, publica los cambios de `package.json`, `package-lock.json` y `vercel.json` y reintenta sin reutilizar la caché de build.
 
 ## Herramientas del responsable
 
