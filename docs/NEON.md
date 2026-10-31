@@ -3,7 +3,7 @@
 ## Estado actual
 
 - Base propia: **`fitness_challenge`**, en el mismo entorno Neon que ya contiene `noemi` (date-app) y `calle`.
-- Migración `001_initial.sql` aplicada: tablas de acceso, retos, actividad y claves.
+- Migraciones `001_initial.sql` y `002_simple_steps.sql` aplicadas. La segunda añade premio, zona/código privado de perfil, snapshots personales y archivo de historial legacy, sin borrar tablas anteriores. Se repitió db:migrate y se verificaron permisos limitados en lectura.
 - Configuración local guardada en `.env`, ignorada por Git y Vercel, permisos `0600`.
 - Registro, cookies de sesión, invitaciones, dos participantes, actividad manual, envíos de Atajos, persistencia, deduplicación y revocación comprobados contra Neon real.
 - Las cuentas/actividad ficticias de verificación se eliminaron. No se importaron registros de date-app o calle.
@@ -55,3 +55,15 @@ El comando de instalación está fijado en `vercel.json` como `npm ci --include=
 - `npm run check`: pruebas locales aisladas; no usa Neon, incluso con el `.env` real presente.
 
 `neon:setup` es una herramienta de operador que requiere `--source-env PATH --apply`. **Ya se ejecutó con autorización y no es necesaria para arrancar la app.** Se limita a la base/roles de Ritmo; ante nombres ajenos o discrepancias se detiene sin rotar ni borrar recursos existentes. No borrar el `.env` para reintentarlo: contiene las credenciales propias necesarias para reanudar una operación parcial.
+
+## Actualización v1: pasos personales
+
+`002_simple_steps.sql` ya está aplicada en fitness_challenge; no es necesario volver a crear la base. Runtime tiene CRUD en `personal_steps` y `legacy_step_archive`, sin CREATE de esquema ni permisos administrativos. El nuevo código todavía debe publicarse en Vercel. Se conservó BETTER_AUTH_SECRET existente. Historial previo se conserva canónicamente (sin sumar retos solapados) y se archiva antes de cascadas por salida/eliminación de retos. El borrado de todos los datos propios elimina también ese archivo.
+
+Nuevo flujo: POST `/api/steps` con `{userCode,steps}`, sin Authorization; perfil privado contiene código y zona. Los endpoints legacy continúan disponibles. Ver README y VERIFICATION.md para el estado final; el informe neon-verification.json anterior es histórico.
+
+## Cierre de retos (003, aplicado)
+
+El31 de octubre de2026 se aplicó003_challenge_results.sql y se repitió sin cambios. Se agregan prize_rule y result a challenges, e historial personal_step_history para elegir el snapshot recibido antes del corte real. Se copian internamente los últimos snapshots existentes; no se inventan versiones antiguas perdidas. Datos históricos insuficientes producen resultado incompleto, no un ganador supuesto.
+
+El rol runtime conserva CRUD, ahora en14tablas, y USAGE/SELECT de secuencia del historial; catálogo confirmó sin CREATE de esquema. Sin cambios de secretos, DNS, variables remotas ni otras bases del proyecto compartido. No se consultaron o exportaron actividades reales mediante herramientas de QA. No editar001,002 ni003 después de aplicadas.

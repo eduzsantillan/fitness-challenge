@@ -1,5 +1,5 @@
 import type { Pool } from 'pg';
-export const APP_TABLES = ['auth_user', 'auth_session', 'auth_account', 'auth_verification', 'profiles', 'challenges', 'memberships', 'daily_activity', 'invitations', 'shortcut_connections', 'request_limits'] as const;
+export const APP_TABLES = ['auth_user', 'auth_session', 'auth_account', 'auth_verification', 'profiles', 'challenges', 'memberships', 'daily_activity', 'invitations', 'shortcut_connections', 'request_limits', 'personal_steps', 'legacy_step_archive', 'personal_step_history'] as const;
 export function sqlIdentifier(value: string) {
   if (!/^[a-z_][a-z0-9_]{0,62}$/.test(value)) throw new Error('Identificador de base o rol no válido.');
   return `"${value}"`;

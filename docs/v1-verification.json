@@ -1,0 +1,30 @@
+{
+  "checkedAt": "2026-10-31T20:35:34.645172+00:00",
+  "version": "challenge-first-v1",
+  "database": "fitness_challenge",
+  "migration": "003_challenge_results.sql",
+  "migrationApplied": true,
+  "runtimeRole": "fitness_challenge_app",
+  "runtimeHasDDL": false,
+  "unitTests": 134,
+  "postgresIntegrationTests": 30,
+  "httpSmokes": [
+    "legacy",
+    "simple-steps"
+  ],
+  "auditVulnerabilities": 0,
+  "browserQA": "local-disposable-postgres-and-explicit-fictional-demo",
+  "responsiveClientWidth": 390,
+  "deployedNewVersionToVercel": false,
+  "iPhoneSimpleSyncValidated": false,
+  "migrationBackfillsExistingPersonalSnapshots": true,
+  "realUserActivityFetchedOrDisplayed": false,
+  "completion": {
+    "immutableCutoff": true,
+    "DSTChecked": true,
+    "receiptWinnerOnly": true,
+    "receiptIdempotent": true,
+    "prizeDefault": "coordinate",
+    "motionReducedSupported": true
+  }
+}

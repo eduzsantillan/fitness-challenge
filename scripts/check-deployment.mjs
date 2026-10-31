@@ -7,7 +7,7 @@ assert.equal(config.framework, 'vite'); assert.equal(config.outputDirectory, 'di
 assert.equal(config.installCommand, 'npm ci --include=dev');
 for (const name of ['@types/node', '@types/pg']) assert.ok(pkg.dependencies[name], `${name} must remain available when the API is compiled with production dependencies`);
 const resolveRewrite = path => config.rewrites.find(r => new RegExp(`^${r.source}$`).test(path))?.destination;
-for (const path of ['/api/status', '/api/session', '/api/auth/sign-up/email', '/api/auth/sign-in/email', '/api/auth/sign-out', '/api/challenges/id/leaderboard', '/api/challenges/id/activity', '/api/challenges/id/connection', '/api/challenges/id/invites', '/api/shortcuts']) {
+for (const path of ['/api/status', '/api/session', '/api/steps', '/api/me/activity', '/api/me/code', '/api/invites/token', '/api/auth/sign-up/email', '/api/auth/sign-in/email', '/api/auth/sign-out', '/api/challenges/id/leaderboard', '/api/challenges/id/activity', '/api/challenges/id/connection', '/api/challenges/id/invites', '/api/shortcuts']) {
   assert.equal(resolveRewrite(path), '/api', `Nested API route must reach the single function: ${path}`);
 }
 assert.ok(!config.rewrites.filter(r => r.destination === '/index.html').some(r => new RegExp(`^${r.source}$`).test('/api')), 'SPA must not swallow the API function destination');

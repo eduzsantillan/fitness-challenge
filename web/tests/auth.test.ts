@@ -6,7 +6,7 @@ describe('same-origin cookie sessions', () => {
   it('loads a real session without persisting any bearer tokens', async () => {
     const fetch = vi.fn().mockResolvedValueOnce(response({ configured: true })).mockResolvedValueOnce(response({ user: { id: 'alice', name: 'Alice', email: 'alice@example.test' } })); vi.stubGlobal('fetch', fetch);
     const auth = await import('../src/auth'); await auth.initialize();
-    expect(auth.session()?.id).toBe('alice'); expect(auth.configured).toBe(true); expect(auth.endpoint).toBe('https://ritmo.example/api/shortcuts');
+    expect(auth.session()?.id).toBe('alice'); expect(auth.configured).toBe(true); expect(auth.endpoint).toBe('https://ritmo.example/api/steps'); expect(auth.legacyEndpoint).toBe('https://ritmo.example/api/shortcuts');
     expect(sessionStorage.setItem).not.toHaveBeenCalled();
     const options = fetch.mock.calls[1]![1] as RequestInit; expect(options.credentials).toBe('same-origin'); expect(options.cache).toBe('no-store'); expect(options.headers).not.toHaveProperty('Authorization');
   });

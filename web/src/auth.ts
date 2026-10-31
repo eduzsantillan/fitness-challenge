@@ -1,7 +1,8 @@
 type User = { id: string; name: string; email: string };
 let currentUser: User | undefined;
 export let configured = false;
-export const endpoint = `${window.location.origin}/api/shortcuts`;
+export const endpoint = `${window.location.origin}/api/steps`;
+export const legacyEndpoint = `${window.location.origin}/api/shortcuts`;
 export const session = () => currentUser;
 export function clearSession() { currentUser = undefined; }
 class APIError extends Error {

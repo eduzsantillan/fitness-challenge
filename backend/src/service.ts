@@ -1,23 +1,79 @@
-import { createHash, randomBytes, randomUUID } from 'node:crypto';
-import { Activity, HttpError, Repository, dateOnly, instant, requiredString } from './model.js';
+import { createHash, createHmac, randomBytes, randomUUID } from 'node:crypto';
+import { Activity, HttpError, Repository, PrivateProfile, PrizeRule, dateOnly, instant, requiredString } from './model.js';
+import { requireOpen } from './completion.js';
 
 export const tokenHash = (token: string) => createHash('sha256').update(token).digest('hex');
 export class ChallengeService {
-  constructor(private db: Repository, private now = () => new Date()) {}
+  constructor(private db: Repository, private now = () => new Date(), private codeSecret = 'isolated-test-only-capability-secret') {}
+  private userCode(userId: string, seed: string) { return createHmac('sha256', this.codeSecret).update(`ritmo.steps.v1:${userId}:${seed}`).digest('base64url'); }
+  private async ownProfile(userId: string) {
+    const seed = randomBytes(32).toString('base64url');
+    const profile = await this.db.ensurePrivateProfile(userId, seed, tokenHash(this.userCode(userId, seed)));
+    // Rotating the application secret invalidates previous derivations on the next profile read.
+    if (tokenHash(this.userCode(userId, profile.codeSeed)) !== profile.codeHash) {
+      return this.db.repairCode(userId, profile.codeHash, seed, tokenHash(this.userCode(userId, seed)));
+    }
+    return profile;
+  }
+  private publicOwnProfile(userId: string, p: PrivateProfile) {
+    return { userId, displayName: p.displayName, timeZone: p.timeZone, userCode: this.userCode(userId, p.codeSeed) };
+  }
+  private validTimeZone(value: unknown) {
+    const timeZone = requiredString(value, 'Zona horaria');
+    try { new Intl.DateTimeFormat('en', { timeZone }).format(this.now()); } catch { throw new HttpError(400, 'Zona horaria no válida.'); }
+    return timeZone;
+  }
+  async previewInvite(token: string) {
+    const invite = await this.db.invite(tokenHash(requiredString(token, 'Invitación', 100)));
+    if (!invite || invite.expiresAt <= this.now().getTime() / 1000) throw new HttpError(404, 'Invitación caducada o no válida.');
+    const challenge = await this.db.challenge(invite.challengeId);
+    if (!challenge) throw new HttpError(404, 'El reto ya no existe.');
+    requireOpen(challenge, this.now());
+    const members = await this.db.members(challenge.id);
+    return { challenge: { id: challenge.id, title: challenge.title, prize: challenge.prize ?? '', startDate: challenge.startDate, endDate: challenge.endDate, timeZone: challenge.timeZone, prizeRule: challenge.prizeRule ?? 'coordinate' },
+      creator: { displayName: await this.db.profile(challenge.ownerId) ?? 'Participante' }, members: members.map(m => ({ displayName: m.displayName })) };
+  }
+  async ingestSteps(body: Record<string, unknown>) {
+    if (Object.keys(body).some(key => !['userCode', 'steps'].includes(key))) throw new HttpError(400, 'Envía solo userCode y steps.');
+    const code = typeof body.userCode === 'string' ? body.userCode : '';
+    if (!/^[A-Za-z0-9_-]{43}$/.test(code)) throw new HttpError(401, 'Código de usuario no válido.');
+    if (typeof body.steps !== 'number' || !Number.isInteger(body.steps) || body.steps < 0 || body.steps > 250000) throw new HttpError(400, 'steps no es válido.');
+    const hash = tokenHash(code), identity = await this.db.stepIdentity(hash);
+    if (!identity) throw new HttpError(401, 'Código de usuario no válido.');
+    if (!identity.timeZone) throw new HttpError(409, 'Abre tu perfil en Ritmo para configurar tu zona horaria.');
+    const now = this.now(), date = this.localDate(now, identity.timeZone), capturedAt = now.toISOString();
+    const saved = await this.db.savePersonalSteps(identity.userId, { date, steps: body.steps, capturedAt, syncedAt: capturedAt }, hash, identity.timeZone);
+    return { accepted: 1, date: saved.date, syncedAt: saved.syncedAt };
+  }
 
   async handle(userId: string, method: string, path: string, body: Record<string, unknown>, source: 'manual' | 'shortcuts' = 'manual', connectionHash?: string): Promise<unknown> {
     const now = this.now();
-    if (path === '/me' && method === 'GET') return { userId, displayName: await this.db.profile(userId) ?? 'Participante' };
+    if (path === '/me' && method === 'GET') return this.publicOwnProfile(userId, await this.ownProfile(userId));
+    if (path === '/me/activity' && method === 'GET') {
+      const p = await this.ownProfile(userId);
+      // Existing measurements remain visible after the product migration; overlapping challenges never add twice.
+      const days = new Map((await this.db.legacyPersonalActivity(userId)).map(day => [day.date, day]));
+      for (const { userId: _, timeZone: __, ...day } of await this.db.personalActivity([userId])) days.set(day.date, day);
+      return { days: [...days.values()].sort((a, b) => a.date.localeCompare(b.date)), timeZone: p.timeZone };
+    }
+    if (path === '/me/code' && method === 'POST') {
+      const p = await this.ownProfile(userId), seed = randomBytes(32).toString('base64url');
+      await this.db.rotateCode(userId, seed, tokenHash(this.userCode(userId, seed)));
+      return this.publicOwnProfile(userId, { ...p, codeSeed: seed });
+    }
+    const preview = /^\/invites\/([A-Za-z0-9_-]+)$/.exec(path);
+    if (preview && method === 'GET') return this.previewInvite(preview[1]!);
     if (path === '/me' && method === 'PUT') {
-      const displayName = requiredString(body.displayName, 'Nombre', 40);
-      await this.db.saveProfile(userId, displayName);
-      return { userId, displayName };
+      await this.ownProfile(userId);
+      if (body.displayName !== undefined) await this.db.saveProfile(userId, requiredString(body.displayName, 'Nombre', 40));
+      if (body.timeZone !== undefined) await this.db.updateTimeZone(userId, this.validTimeZone(body.timeZone));
+      return this.publicOwnProfile(userId, await this.ownProfile(userId));
     }
     if (path === '/me/data' && method === 'DELETE') {
       if (body.confirm !== 'DELETE') throw new HttpError(400, 'Confirma el borrado.');
       for (const c of await this.db.challenges(userId)) {
         if (c.ownerId === userId) await this.db.deleteChallenge(c.id);
-        else await this.db.leave(c.id, userId);
+        else { await this.db.leaderboard(c.id, userId, now); await this.db.leave(c.id, userId); }
       }
       await this.db.deleteProfile(userId);
       return { deleted: true };
@@ -25,13 +81,24 @@ export class ChallengeService {
     if (path === '/challenges' && method === 'GET') return { challenges: await this.db.challenges(userId) };
     if (path === '/challenges' && method === 'POST') {
       if (body.shareConsent !== true) throw new HttpError(400, 'Debes aceptar compartir los totales del reto.');
-      const startDate = dateOnly(body.startDate), endDate = dateOnly(body.endDate);
-      const days = (Date.parse(endDate) - Date.parse(startDate)) / 86_400_000;
-      if (days < 0 || days > 30) throw new HttpError(400, 'El reto debe durar entre 1 y 31 días.');
-      const timeZone = requiredString(body.timeZone, 'Zona horaria');
-      try { new Intl.DateTimeFormat('en', { timeZone }).format(now); } catch { throw new HttpError(400, 'Zona horaria no válida.'); }
+      let startDate: string, endDate: string, timeZone: string;
+      if (body.durationDays !== undefined) {
+        if (typeof body.durationDays !== 'number' || !Number.isInteger(body.durationDays) || body.durationDays < 1 || body.durationDays > 31) throw new HttpError(400, 'El reto debe durar entre 1 y 31 días.');
+        const profile = await this.ownProfile(userId);
+        if (!profile.timeZone) throw new HttpError(409, 'Abre tu perfil para configurar la zona horaria.');
+        timeZone = profile.timeZone; startDate = this.localDate(now, timeZone);
+        endDate = new Date(Date.parse(`${startDate}T00:00:00Z`) + (body.durationDays - 1) * 86400000).toISOString().slice(0, 10);
+      } else {
+        startDate = dateOnly(body.startDate); endDate = dateOnly(body.endDate); timeZone = this.validTimeZone(body.timeZone);
+        const days = (Date.parse(endDate) - Date.parse(startDate)) / 86_400_000;
+        if (days < 0 || days > 30) throw new HttpError(400, 'El reto debe durar entre 1 y 31 días.');
+      }
+      const prize = body.prize === undefined ? '' : (typeof body.prize === 'string' && body.prize.trim().length <= 160 ? body.prize.trim() : undefined);
+      if (prize === undefined) throw new HttpError(400, 'El premio no es válido.');
+      const prizeRule = body.prizeRule ?? 'coordinate';
+      if (!['coordinate', 'others', 'creator'].includes(prizeRule as string)) throw new HttpError(400, 'El acuerdo del premio no es válido.');
       const challenge = { id: randomUUID(), title: requiredString(body.title, 'Nombre del reto', 60), ownerId: userId,
-        startDate, endDate, timeZone, createdAt: now.toISOString() };
+        startDate, endDate, timeZone, prize, prizeRule: prizeRule as PrizeRule, createdAt: now.toISOString() };
       await this.db.createChallenge(challenge, await this.newMember(userId, now));
       return { challenge };
     }
@@ -42,10 +109,10 @@ export class ChallengeService {
       if (!invite || invite.expiresAt <= now.getTime() / 1000) throw new HttpError(404, 'Invitación caducada o no válida.');
       const challenge = await this.db.challenge(invite.challengeId);
       if (!challenge) throw new HttpError(404, 'El reto ya no existe.');
-      if (!(await this.db.member(challenge.id, userId))) await this.db.join(hash, await this.newMember(userId, now), Math.floor(now.getTime() / 1000));
+      if (!(await this.db.member(challenge.id, userId))) { requireOpen(challenge, now); await this.db.join(hash, await this.newMember(userId, now), Math.floor(now.getTime() / 1000)); }
       return { challenge };
     }
-    const match = /^\/challenges\/([a-zA-Z0-9-]+)(?:\/(invites|activity|leaderboard|connection|membership))?$/.exec(path);
+    const match = /^\/challenges\/([a-zA-Z0-9-]+)(?:\/(invites|activity|leaderboard|connection|membership|prize-receipt))?$/.exec(path);
     if (!match) throw new HttpError(404, 'Ruta no encontrada.');
     const id = match[1]!, resource = match[2];
     const member = await this.db.member(id, userId);
@@ -54,10 +121,12 @@ export class ChallengeService {
     if (!challenge) throw new HttpError(404, 'Reto no encontrado.');
     if (!resource && method === 'GET') return { challenge, members: await this.db.members(id) };
     if (resource === 'membership' && method === 'DELETE') {
+      await this.db.leaderboard(id, userId, now);
       if (challenge.ownerId === userId) await this.db.deleteChallenge(id); else await this.db.leave(id, userId);
       return { removed: true };
     }
     if (resource === 'activity' && method === 'DELETE') {
+      await this.db.leaderboard(id, userId, now);
       await this.db.clearActivity(id, userId); return { deleted: true };
     }
     if (resource === 'connection') {
@@ -73,7 +142,9 @@ export class ChallengeService {
         return { token, expiresAt, timeZone: challenge.timeZone };
       }
     }
+    if (resource === 'prize-receipt' && method === 'POST') return { result: await this.db.receivePrize(id, userId, now) };
     if (resource === 'invites' && method === 'POST') {
+      requireOpen(challenge, now);
       if (challenge.ownerId !== userId) throw new HttpError(403, 'Solo quien creó el reto puede invitar.');
       const token = randomBytes(24).toString('base64url');
       const expiresAt = Math.floor(now.getTime() / 1000) + 7 * 86400;
@@ -81,6 +152,7 @@ export class ChallengeService {
       return { token, expiresAt };
     }
     if (resource === 'activity' && method === 'PUT') {
+      requireOpen(challenge, now);
       if (!Array.isArray(body.days) || body.days.length < 1 || body.days.length > 31) throw new HttpError(400, 'Envía entre 1 y 31 días.');
       const seen = new Set<string>();
       const days: Activity[] = body.days.map((item: unknown) => {
@@ -100,19 +172,7 @@ export class ChallengeService {
       await this.db.saveActivity(id, userId, days, connectionHash);
       return { accepted: days.length, syncedAt: now.toISOString() };
     }
-    if (resource === 'leaderboard' && method === 'GET') {
-      const members = await this.db.members(id), activity = await this.db.activity(id);
-      const rows = members.map(person => {
-        const days = activity.filter(row => row.userId === person.userId && row.date >= challenge.startDate && row.date <= challenge.endDate);
-        const sum = (key: 'steps' | 'workoutSeconds') => {
-          const values = days.flatMap(day => day[key] === null ? [] : [day[key]!]);
-          return values.length ? values.reduce((a, b) => a + b, 0) : null;
-        };
-        return { userId: person.userId, displayName: person.displayName, steps: sum('steps'), workoutSeconds: sum('workoutSeconds'),
-          days: days.map(({ userId: _, ...day }) => day).sort((a, b) => a.date.localeCompare(b.date)) };
-      });
-      return { challenge, rows };
-    }
+    if (resource === 'leaderboard' && method === 'GET') return this.db.leaderboard(id, userId, now);
     throw new HttpError(404, 'Ruta no encontrada.');
   }
   async ingest(token: string, body: Record<string, unknown>) {

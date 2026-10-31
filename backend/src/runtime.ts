@@ -6,7 +6,7 @@ import { RateLimiter } from './rate-limit.js';
 import { ChallengeService } from './service.js';
 export function createRuntime(config = readConfig()) {
   const pool = createPool(config), limiter = new RateLimiter(pool, config.secret), auth = createAuth(pool, config, limiter);
-  const handler = createHandler(new ChallengeService(new PostgresRepository(pool)), {
+  const handler = createHandler(new ChallengeService(new PostgresRepository(pool), undefined, config.secret), {
     origin: config.origin, auth: request => auth.handler(request), limit: (key, rule) => limiter.consume(key, rule),
     user: async request => { const result = await auth.api.getSession({ headers: request.headers, query: { disableCookieCache: true, disableRefresh: true } }); return result?.user ?? null; },
   });

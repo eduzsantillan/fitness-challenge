@@ -29,14 +29,16 @@ export function createHandler(service: ChallengeService, options: HandlerOptions
       if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: { 'cache-control': 'no-store' } });
       if (path === '/status' && request.method === 'GET') return json({ configured: true, emailVerification: false, passwordRecovery: false });
       const isIngest = path === '/shortcuts' && request.method === 'POST';
+      const isSteps = path === '/steps' && request.method === 'POST';
       const write = !['GET', 'HEAD'].includes(request.method);
-      if (!isIngest && (request.headers.get('sec-fetch-site') === 'cross-site' || (write && request.headers.get('origin') !== options.origin))) throw new HttpError(403, 'Abre la app desde su dominio para continuar.');
+      if (!isIngest && !isSteps && (request.headers.get('sec-fetch-site') === 'cross-site' || (write && request.headers.get('origin') !== options.origin))) throw new HttpError(403, 'Abre la app desde su dominio para continuar.');
       const limited = await options.limit?.(`ip:${request.headers.get('x-real-ip') ?? 'unknown'}`, { window: 60, max: 180 });
       if (limited && !limited.allowed) return json({ message: 'Demasiadas solicitudes. Espera un momento.' }, 429, { 'retry-after': String(limited.retryAfter ?? 60) });
       let body: Record<string, unknown> = {};
       if (write) {
-        if (request.headers.get('content-type')?.split(';')[0]?.trim().toLowerCase() !== 'application/json') throw new HttpError(415, 'Envía los datos como JSON.');
+        if (!isSteps && request.headers.get('content-type')?.split(';')[0]?.trim().toLowerCase() !== 'application/json') throw new HttpError(415, 'Envía los datos como JSON.');
         const raw = await readBody(request);
+        if (isSteps && Buffer.byteLength(raw) > 1024) throw new HttpError(413, 'Solicitud demasiado grande.');
         if (raw) {
           try { const parsed: unknown = JSON.parse(raw); if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error(); body = parsed as Record<string, unknown>; }
           catch { throw new HttpError(400, 'JSON no válido.'); }
@@ -53,6 +55,13 @@ export function createHandler(service: ChallengeService, options: HandlerOptions
           return new Response(JSON.stringify(data.user ? { user: publicUser(data.user) } : { success: true }), { status: response.status, headers });
         }
         return new Response(response.body, { status: response.status, headers });
+      }
+      if (isSteps) {
+        // A private write capability is carried in JSON, never in query strings or Authorization.
+        const code = typeof body.userCode === 'string' ? body.userCode : '';
+        const limit = await options.limit?.(`steps:${tokenHash(code)}`, { window: 60, max: 12 });
+        if (limit && !limit.allowed) return json({ message: 'Espera antes de volver a enviar.' }, 429, { 'retry-after': String(limit.retryAfter ?? 60) });
+        return json(await service.ingestSteps(body));
       }
       if (isIngest) {
         const token = /^Bearer (\S+)$/i.exec(request.headers.get('authorization') ?? '')?.[1];

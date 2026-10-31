@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process';
 import assert from 'node:assert/strict';
+import { runSimpleSmoke } from './smoke-simple.mjs';
 const server = spawn(process.execPath, ['--import', 'tsx', 'backend/local.ts'], { env: { ...process.env, PORT: '0' }, stdio: ['ignore', 'pipe', 'pipe'] });
 try {
   const origin = await new Promise((resolve, reject) => {
@@ -33,5 +34,6 @@ try {
   assert.equal((await request('/shortcuts', 'POST', payload, 'none', token)).status, 401);
   await request('/auth/sign-out', 'POST', {});
   assert.equal((await request('/me')).status, 401);
+  await runSimpleSmoke(origin, process.env.APP_ORIGIN);
   console.log('HTTP smoke passed: real registration/cookies, two users, PostgreSQL persistence, scoped ingest, idempotency and revocation.');
 } finally { server.kill('SIGTERM'); }

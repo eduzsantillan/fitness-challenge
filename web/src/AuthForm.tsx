@@ -2,8 +2,8 @@ import { useState, type FormEvent } from 'react';
 import { ArrowRight, ShieldCheck } from 'lucide-react';
 import { login } from './auth';
 import { Field } from './components';
-export function AuthForm({ onSuccess }: { onSuccess: () => void }) {
-  const [register, setRegister] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState('');
+export function AuthForm({ onSuccess, initialRegister = false }: { onSuccess: () => void; initialRegister?: boolean }) {
+  const [register, setRegister] = useState(initialRegister), [busy, setBusy] = useState(false), [error, setError] = useState('');
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); if (busy) return;
     const f = new FormData(event.currentTarget); setBusy(true); setError('');
