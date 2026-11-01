@@ -26,5 +26,5 @@ export function errorText(message: string): string {
   if (language === 'es') return message;
   const translated = t(message);
   // Server validation is still Spanish. Never expose raw internal errors as English copy.
-  return translated !== message || !/[áéíóúñ¿¡]|\b(No|El|La|Los|Las|Inicia|Falta|Revisa|Envía|Código|Primero)\b/.test(message) ? translated : "We couldn't complete that. Check your connection and try again.";
+  return translated !== message || Object.values(translations).includes(message) ? translated : "We couldn't complete that. Check your connection and try again.";
 }

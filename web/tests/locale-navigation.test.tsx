@@ -38,7 +38,7 @@ describe('language and navigation',()=>{
   const profile=render(<ProfileView profile={{userId:'a',displayName:'Ana',timeZone:'UTC',userCode:'PRIVATE'}} days={[]} today="2099-01-01" demo={false} busy={false} endpoint="https://example.test/api/steps" onCopy={noop} onSaveName={noop} onRotate={noop} onLogout={noop} onPrivacy={noop}/>);
   expect(profile).toContain('Language');expect(profile).toContain('shortcuts-guide.md');expect(profile).not.toContain('PRIVATE');
   expect(render(<LanguagePicker/>)).toContain('value="en" selected');
-  expect(errorText('Inicia sesión.')).toBe('Please log in.');expect(errorText('El servidor falló.')).not.toContain('servidor');
+  expect(errorText('Inicia sesión.')).toBe('Please log in.');expect(errorText('El servidor falló.')).not.toContain('servidor');expect(errorText('Este reto ya terminó.')).toContain("We couldn't");expect(errorText('Incorrect email or password.')).toBe('Incorrect email or password.');
  });
  it('keeps English completion copy and ranking conservative',()=>{
   setLanguage('en');
