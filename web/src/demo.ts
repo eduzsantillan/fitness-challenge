@@ -115,7 +115,7 @@ export class DemoClient implements Client {
     }
     const preview = /^\/invites\/([^/]+)$/.exec(path);
     if (preview && method === 'GET') { const board = this.inviteBoard(preview[1]); this.requireOpen(board); return copy(this.preview(board)) as T; }
-    if (path === '/challenges' && method === 'GET') return copy({ challenges: [...this.boards.values()].map(board => board.challenge) }) as T;
+    if (path === '/challenges' && method === 'GET') return copy({ challenges: [...this.boards.values()].map(board => ({ ...board.challenge, participants: board.rows.filter(row => !row.redacted).map(row => ({ displayName: row.displayName })) })) }) as T;
     if (path === '/challenges' && method === 'POST') {
       if (body.shareConsent !== true) throw new Error('Debes aceptar compartir los totales del reto.');
       let startDate: string, endDate: string, timeZone: string;

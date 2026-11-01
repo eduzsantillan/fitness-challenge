@@ -69,6 +69,12 @@ describe('real PostgreSQL and Better Auth', () => {
     await request('/me', 'PUT', { displayName: 'Alice nueva' });
     const board = await request(`/challenges/${id}/leaderboard`, 'GET', undefined, bob);
     expect((await board.json()).rows.find((r: { userId: string }) => r.userId === aliceId).displayName).toBe('Alice nueva');
+    const list = await (await request('/challenges', 'GET', undefined, bob)).json();
+    expect(list.challenges.find((c: {id:string}) => c.id === id).participants).toEqual([{displayName:'Alice nueva'},{displayName:'bob'}]);
+    const outside = await (await request('/challenges', 'GET', undefined, stranger)).json();
+    expect(outside.challenges.some((c: {id:string}) => c.id === id)).toBe(false);
+    expect(JSON.stringify(list)).not.toContain('codeSeed'); expect(JSON.stringify(list)).not.toContain('userCode');
+
   });
   it('upserts daily snapshots, ignores older writes, and preserves manual workout atomically', async () => {
     const id = await group(), token = await connect(id);

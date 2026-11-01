@@ -13,6 +13,13 @@ describe('private challenges', () => {
     const id = await create(); await service.handle('alice', 'PUT', '/me', { displayName: 'Nuevo nombre' });
     expect((await db.members(id))[0]?.displayName).toBe('Nuevo nombre');
   });
+  it('lists participant names only inside shared challenges and follows profile changes', async () => {
+    const id = await create(); await service.handle('alice', 'PUT', '/me', {displayName:'Ana'});
+    const list = await db.challenges('alice'); expect(list[0]?.participants).toEqual([{displayName:'Ana'}]);
+    expect(await db.challenges('stranger')).toEqual([]);
+    expect(list[0]?.participants?.[0]).not.toHaveProperty('userId');
+    expect((await db.challenge(id))?.participants).toBeUndefined();
+  });
   it('requires explicit sharing consent', async () => { await expect(service.handle('alice', 'POST', '/challenges', { ...input, shareConsent: false })).rejects.toMatchObject({ status: 400 }); });
   it('rejects impossible dates and zones', async () => {
     for (const change of [{ startDate: '2026-99-99' }, { endDate: '2026-02-30' }, { timeZone: 'Mars/Olympus' }]) await expect(service.handle('alice', 'POST', '/challenges', { ...input, ...change })).rejects.toMatchObject({ status: 400 });

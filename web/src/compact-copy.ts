@@ -1,3 +1,4 @@
+import { t } from './i18n';
 import type { Motivation } from './challenge-helpers';
 export const COMPACT_MESSAGES = {
   upcoming: ['Pronto empieza el pique.', 'Las zapatillas ya tienen plan.', 'Tu próxima excusa para salir.', 'La salida está cerca.', 'El sofá todavía no sospecha nada.', 'Calienta la playlist. Ya casi.'],
@@ -12,8 +13,8 @@ export const COMPACT_MESSAGES = {
 /** One short sentence; never repeats a potentially long user-written prize. */
 export function compactMotivation(motivation: Motivation): string {
   const messages = COMPACT_MESSAGES[motivation.scenario as keyof typeof COMPACT_MESSAGES];
-  if (!messages) return 'Cada paso cuenta.';
+  if (!messages) return t('Cada paso cuenta.');
   let hash = 0;
   for (const character of motivation.message) hash = (Math.imul(hash, 31) + character.charCodeAt(0)) | 0;
-  return messages[(hash >>> 0) % messages.length]!;
+  return t(messages[(hash >>> 0) % messages.length]!);
 }

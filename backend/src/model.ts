@@ -1,6 +1,7 @@
 export type Challenge = {
   id: string; title: string; ownerId: string; startDate: string; endDate: string;
   timeZone: string; createdAt: string; prize?: string; prizeRule?: PrizeRule;
+  participants?: { displayName: string }[];
 };
 export type PrizeRule = 'coordinate' | 'others' | 'creator';
 export type BoardRow = { userId: string; displayName: string; steps: number | null; workoutSeconds: number | null; days: Activity[]; redacted?: boolean };

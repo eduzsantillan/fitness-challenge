@@ -1,3 +1,4 @@
+import { locale } from './i18n';
 /** Pure calendar helpers: `today` must already be a date in the challenge/profile zone. */
 export type ChallengeStatus = 'upcoming' | 'active' | 'finished';
 export type MotivationScenario = 'upcoming' | 'no-data' | 'starting' | 'solo' | 'behind' | 'leading' | 'tied' | 'finishing' | 'winner' | 'tied-finish' | 'finished' | 'incomplete';
@@ -49,7 +50,7 @@ function validSteps(value: number | null): number | null {
   return value !== null && Number.isSafeInteger(value) && value >= 0 ? value : null;
 }
 const formatDate = (value: string, options: Intl.DateTimeFormatOptions) =>
-  new Intl.DateTimeFormat('es-ES', { ...options, timeZone: 'UTC' }).format(new Date(`${value}T12:00:00Z`));
+  new Intl.DateTimeFormat(locale(), { ...options, timeZone: 'UTC' }).format(new Date(`${value}T12:00:00Z`));
 
 export function getChallengeStatus(startDate: string, endDate: string, today: string): ChallengeStatus {
   [startDate, endDate, today].forEach(assertDate);

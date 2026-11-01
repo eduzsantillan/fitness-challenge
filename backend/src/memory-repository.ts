@@ -62,7 +62,7 @@ export class MemoryRepository implements Repository {
   }
   async createChallenge(c: Challenge, m: Member) { this.groups.set(c.id, c); this.people.set(c.id, new Map([[m.userId, m]])); }
   async challenge(id: string) { return this.groups.get(id); }
-  async challenges(userId: string) { return [...this.groups.values()].filter(c => this.people.get(c.id)?.has(userId)); }
+  async challenges(userId: string) { return [...this.groups.values()].filter(c => this.people.get(c.id)?.has(userId)).map(c => ({ ...c, participants: [...this.people.get(c.id)!.values()].map(m => ({ displayName: this.profiles.get(m.userId) ?? m.displayName })) })); }
   async leaderboard(id: string, userId: string, now: Date) {
     if (!await this.member(id, userId)) throw new HttpError(403, 'No perteneces al reto.');
     const challenge = await this.challenge(id); if (!challenge) throw new HttpError(404, 'Reto no encontrado.');

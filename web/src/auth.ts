@@ -1,3 +1,4 @@
+import { t } from './i18n';
 type User = { id: string; name: string; email: string };
 let currentUser: User | undefined;
 export let configured = false;
@@ -19,10 +20,10 @@ async function request<T>(path: string, method = 'GET', body?: unknown): Promise
   if (!response.ok) {
     if (response.status === 401) clearSession();
     const messages: Record<string, string> = {
-      INVALID_EMAIL_OR_PASSWORD: 'Email o contraseña incorrectos.', USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL: 'Ya existe una cuenta con ese email. Intenta entrar.',
-      PASSWORD_TOO_SHORT: 'Usa una contraseña de al menos 12 caracteres.', PASSWORD_TOO_LONG: 'La contraseña es demasiado larga.', INVALID_EMAIL: 'Revisa tu email.',
+      INVALID_EMAIL_OR_PASSWORD: t("Email o contraseña incorrectos."), USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL: t("Ya existe una cuenta con ese email. Intenta entrar."),
+      PASSWORD_TOO_SHORT: t("Usa una contraseña de al menos 12 caracteres."), PASSWORD_TOO_LONG: t("La contraseña es demasiado larga."), INVALID_EMAIL: t("Revisa tu email."),
     };
-    throw new APIError(response.status === 429 ? 'Demasiados intentos. Espera un minuto.' : messages[result.code ?? ''] ?? result.message ?? 'No se pudo completar la solicitud.', response.status);
+    throw new APIError(response.status === 429 ? t("Demasiados intentos. Espera un minuto.") : messages[result.code ?? ''] ?? result.message ?? t("No se pudo completar la solicitud."), response.status);
   }
   return result;
 }
@@ -49,7 +50,7 @@ export async function login(email: string, password: string, name?: string) {
   if (!configured) throw new Error('Primero configura Vercel y Neon. Los pasos están en el README.');
   await request(name === undefined ? '/auth/sign-in/email' : '/auth/sign-up/email', 'POST', { email, password, ...(name === undefined ? {} : { name }), rememberMe: true });
   const result = await request<{ user: User | null }>('/session');
-  if (!result.user) throw new Error('No se pudo confirmar tu sesión. Vuelve a entrar.');
+  if (!result.user) throw new Error(t("No se pudo confirmar tu sesión. Vuelve a entrar."));
   currentUser = result.user;
 }
 export const cloudClient = { request };

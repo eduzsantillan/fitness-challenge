@@ -1,3 +1,4 @@
+import { t } from './i18n';
 import { useEffect, useRef, useState, type FormEvent, type InputHTMLAttributes, type ReactNode } from 'react';
 import { Check, CircleHelp, Copy, Footprints, X } from 'lucide-react';
 import { duration, number, shortDate } from './dates';
@@ -31,6 +32,6 @@ export function ActivityForm({ current, days, today, busy, onSave }: { current: 
 }
 export function ModalFrame({ title, children, onClose }: { title: string; children: ReactNode; onClose: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
-  useEffect(() => { const node = dialog.current; node?.showModal(); return () => { node?.close(); }; }, []);
-  return <dialog ref={dialog} className="modal" onCancel={onClose} onClick={e => { if (e.target === dialog.current) onClose(); }} aria-labelledby="modal-title"><div className="modal-content"><button className="modal-close" onClick={onClose} aria-label="Cerrar ventana"><X size={20} /></button><h2 id="modal-title">{title}</h2>{children}</div></dialog>;
+  useEffect(() => { const node = dialog.current; const overflow = document.body.style.overflow; document.body.style.overflow = 'hidden'; node?.showModal(); return () => { node?.close(); document.body.style.overflow = overflow; }; }, []);
+  return <dialog ref={dialog} className="modal" onCancel={e => { e.preventDefault(); onClose(); }} onClick={e => { if (e.target === dialog.current) onClose(); }} aria-labelledby="modal-title"><div className="modal-content"><button className="modal-close" onClick={onClose} aria-label={t("Cerrar ventana")}><X size={20} /></button><h2 id="modal-title">{title}</h2>{children}</div></dialog>;
 }

@@ -53,3 +53,18 @@
 /* Readable secondary text even on the tinted cards. */
 :root{--quiet:#5d6b51}.simple-meta,.card-end,.simple-steps>span,.simple-person small,.simple-rank,.simple-history .last-sync,.simple-result-note,.simple-details,.simple-prize-note{color:var(--quiet)}.simple-motivation{color:#6b5476}
 @media(min-width:761px){.main-content:has(>.simple-cover),.main-content:has(>.simple-finish){max-width:840px}}
+
+/* Override the native dialog max-width: every sheet has equal side gutters. */
+.modal { box-sizing:border-box; max-width:calc(100% - 32px); overscroll-behavior:contain; }
+.modal-close { width:44px; height:44px; top:10px; right:10px; }
+.modal h2 { padding-right:30px; }
+.share-url { overflow-wrap:anywhere; min-width:0; }
+.card-participants { display:block; font-size:16px; line-height:1.5; color:var(--ink); margin:12px 0 0; overflow-wrap:anywhere; }
+.language-picker { display:flex; align-items:center; gap:12px; min-height:44px; font-size:16px; }
+.language-picker select { min-height:44px; font:inherit; border:1px solid var(--line,#ddd); border-radius:12px; background:var(--paper,#fffefa); color:inherit; padding:8px 12px; }
+.guest-actions { display:flex; align-items:center; gap:12px; }
+@media(max-width:760px) {
+ .modal { width:calc(100% - 20px); max-width:520px; margin:auto auto 10px; border:1px solid #eceee5; border-radius:26px; max-height:calc(100dvh - 20px); }
+ .modal-content { padding-bottom:calc(27px + env(safe-area-inset-bottom,0px)); }
+ .guest-actions { gap:6px; } .guest-actions .language-picker { font-size:14px; }
+}

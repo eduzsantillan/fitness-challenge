@@ -1,3 +1,4 @@
+import { locale } from './i18n';
 import type { Activity } from './types';
 export function dateKey(date = new Date(), timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone): string {
   const parts = new Intl.DateTimeFormat('en', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(date);
@@ -11,10 +12,10 @@ export function sum(days: Activity[], metric: 'steps' | 'workoutSeconds'): numbe
   const values = days.flatMap(day => day[metric] === null ? [] : [day[metric]!]);
   return values.length ? values.reduce((total, value) => total + value, 0) : null;
 }
-export const number = (value: number | null) => value === null ? '—' : new Intl.NumberFormat('es-ES').format(value);
+export const number = (value: number | null) => value === null ? '—' : new Intl.NumberFormat(locale()).format(value);
 export function duration(value: number | null) {
   if (value === null) return '—';
   const minutes = Math.floor(value / 60);
   return minutes >= 60 ? `${Math.floor(minutes / 60)} h ${minutes % 60} min` : `${minutes} min`;
 }
-export const shortDate = (date: string) => new Intl.DateTimeFormat('es', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${date}T12:00:00Z`));
+export const shortDate = (date: string) => new Intl.DateTimeFormat(locale(), { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${date}T12:00:00Z`));

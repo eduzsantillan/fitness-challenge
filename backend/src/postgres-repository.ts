@@ -155,7 +155,7 @@ export class PostgresRepository implements Repository {
     });
   }
   async challenge(id: string) { return this.one<Challenge>(`SELECT ${challengeColumns} FROM challenges WHERE id=$1`, [id]); }
-  async challenges(userId: string) { return (await this.pool.query<Challenge>(`SELECT ${challengeColumns} FROM challenges WHERE id IN (SELECT challenge_id FROM memberships WHERE user_id=$1) ORDER BY created_at DESC, id`, [userId])).rows; }
+  async challenges(userId: string) { return (await this.pool.query<Challenge>(`SELECT ${challengeColumns}, COALESCE((SELECT json_agg(json_build_object('displayName', COALESCE(p.display_name,u.name)) ORDER BY m.joined_at,m.user_id) FROM memberships m JOIN auth_user u ON u.id=m.user_id LEFT JOIN profiles p ON p.user_id=m.user_id WHERE m.challenge_id=challenges.id),'[]'::json) AS participants FROM challenges WHERE id IN (SELECT challenge_id FROM memberships WHERE user_id=$1) ORDER BY created_at DESC, id`, [userId])).rows; }
   async member(id: string, userId: string) { return this.one<Member>(`${memberQuery} WHERE m.challenge_id=$1 AND m.user_id=$2`, [id, userId]); }
   async members(id: string) { return (await this.pool.query<Member>(`${memberQuery} WHERE m.challenge_id=$1 ORDER BY m.joined_at, m.user_id`, [id])).rows; }
   async saveInvite(hash: string, invite: Invite) {

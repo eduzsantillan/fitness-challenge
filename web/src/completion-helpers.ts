@@ -1,3 +1,4 @@
+import { t, locale } from './i18n';
 /** Presentation only: the server, never a browser clock, decides when a result is final. */
 export type CompletionRow = { userId: string; displayName: string; steps: number | null; redacted?: boolean };
 export type CompletionResult = {
@@ -97,7 +98,7 @@ function measuredSteps(value: number | null): number | null {
 function unique(ids: readonly string[]): string[] { return [...new Set(ids)]; }
 function personName(row: CompletionRow): string { return row.displayName.trim() || 'Un participante'; }
 function names(rows: readonly CompletionRow[]): string {
-  return new Intl.ListFormat('es', { style: 'long', type: 'conjunction' }).format(rows.map(personName));
+  return new Intl.ListFormat(locale(), { style: 'long', type: 'conjunction' }).format(rows.map(personName));
 }
 
 function prizePresentation(
@@ -105,44 +106,44 @@ function prizePresentation(
 ): CompletionPrize {
   const prize = input.prize?.trim() ?? '';
   const base = { payerIds: [] as string[], recipientIds: [] as string[], canMarkReceived: false };
-  if (!prize) return { ...base, state: 'none', title: 'Un reto para recordar', description: 'Este reto no tiene un premio escrito.' };
+  if (!prize) return { ...base, state: 'none', title: 'Un reto para recordar', description: t("Este reto no tiene un premio escrito.") };
   const winnerIds = unique(result.winnerUserIds);
   const availableIds = new Set(rows.filter(row => !row.redacted).map(row => row.userId));
   const payerIds = unique(result.payerUserIds).filter(id => availableIds.has(id) && !winnerIds.includes(id));
   const recipientIds = winnerRows.map(row => row.userId);
   // Receipt is a historical event even if the winner later withdraws their shared data.
   if (result.outcome === 'winner' && result.receivedAt) return {
-    ...base, payerIds, recipientIds, state: 'delivered', title: 'Premio recibido',
-    description: 'La persona ganadora confirmó que recibió el premio. Un bonito cierre para esta historia.',
+    ...base, payerIds, recipientIds, state: 'delivered', title: t("Premio recibido"),
+    description: t("La persona ganadora confirmó que recibió el premio. Un bonito cierre para esta historia."),
   };
   // Never reconstruct a deleted person's identity or infer an obligation from the ranking.
   const validWinner = result.outcome === 'winner' && winnerIds.length === 1 && winnerRows.length === 1 && winnerRows[0]!.steps !== null;
   if (!validWinner) {
     const description = result.outcome === 'tie'
-      ? 'El empate no asigna el premio automáticamente. Acuerden juntos cómo celebrarlo.'
+      ? t("El empate no asigna el premio automáticamente. Acuerden juntos cómo celebrarlo.")
       : result.outcome === 'winner'
-        ? 'El resultado se conserva, pero ya no se muestran todos los participantes. La entrega se coordina fuera de la app.'
-        : 'No hay una entrega automática sin un ganador individual. El grupo decide qué hacer con el premio.';
+        ? t("El resultado se conserva, pero ya no se muestran todos los participantes. La entrega se coordina fuera de la app.")
+        : t("No hay una entrega automática sin un ganador individual. El grupo decide qué hacer con el premio.");
     return { ...base, state: 'unresolved', title: 'El premio, en conversación', description };
   }
   const winner = winnerRows[0]!;
-  const winnerRecipient = winner.userId === input.userId ? 'ti' : personName(winner);
+  const winnerRecipient = winner.userId === input.userId ? t("ti") : personName(winner);
   const payerRows = payerIds.flatMap(id => { const row = rows.find(candidate => candidate.userId === id); return row ? [row] : []; });
   let title: string; let description: string;
   if (result.prizeRule === 'creator' && !payerRows.length && !result.hasRedactions) {
     title = 'El premio se queda en casa';
-    description = 'Quien creó el reto también lo ganó. No asignamos la entrega a otra persona del grupo.';
+    description = t("Quien creó el reto también lo ganó. No asignamos la entrega a otra persona del grupo.");
   } else if (result.prizeRule === 'coordinate' || !payerRows.length) {
     title = winner.userId === input.userId ? 'Tu premio, próximo capítulo' : 'Pónganle fecha al premio';
-    description = `El grupo acuerda cómo y cuándo entregar «${prize}» a ${winnerRecipient}. No hay una persona asignada automáticamente.`;
+    description = t("El grupo acuerda cómo y cuándo entregar «{0}» a {1}. No hay una persona asignada automáticamente.", [prize, winnerRecipient]);
   } else if (payerIds.includes(input.userId)) {
     title = 'Te toca un bonito cierre';
     description = payerRows.length === 1
-      ? `Te toca entregar «${prize}» a ${winnerRecipient}, según la regla elegida para este reto.`
-      : `Te toca coordinar con ${names(payerRows.filter(row => row.userId !== input.userId))} la entrega de «${prize}» a ${winnerRecipient}.`;
+      ? t("Te toca entregar «{0}» a {1}, según la regla elegida para este reto.", [prize, winnerRecipient])
+      : t("Te toca coordinar con {0} la entrega de «{1}» a {2}.", [names(payerRows.filter(row => row.userId !== input.userId)), prize, winnerRecipient]);
   } else {
     title = winner.userId === input.userId ? 'Un premio te espera' : 'El próximo capítulo: el premio';
-    description = `${names(payerRows)} ${payerRows.length === 1 ? 'se encarga' : 'se encargan'} de entregar «${prize}» a ${winnerRecipient}.`;
+    description = t("{0} {1} de entregar «{2}» a {3}.", [names(payerRows), payerRows.length === 1 ? t('se encarga') : t('se encargan'), prize, winnerRecipient]);
   }
   return {
     state: 'pending', title, description, payerIds, recipientIds,
@@ -161,7 +162,7 @@ export function getCompletionPresentation(input: CompletionInput): CompletionPre
     seen.add(row.userId); return true;
   }).map((row): CompletionRow => ({
     userId: row.userId,
-    displayName: row.redacted ? 'Participante que salió' : row.displayName,
+    displayName: row.redacted ? t("Participante que salió") : row.displayName,
     steps: row.redacted ? null : measuredSteps(row.steps),
     ...(row.redacted ? { redacted: true } : {}),
   }));
@@ -186,19 +187,19 @@ export function getCompletionPresentation(input: CompletionInput): CompletionPre
   const total = known.reduce((sum, row) => sum + row.steps!, 0);
   const groupSteps = known.length && Number.isSafeInteger(total) ? total : null;
   let title: string;
-  if (scenario === 'winner') title = 'Este reto es tuyo.';
-  else if (scenario === 'participant') title = winners.length === 1 ? `${personName(winners[0]!)} se lleva el primer puesto.` : 'Un reto para recordar.';
-  else if (scenario === 'tie') title = 'La meta se comparte.';
-  else if (scenario === 'incomplete') title = 'Cerramos sin adivinar.';
-  else if (scenario === 'solo') title = 'Tu camino también cuenta.';
-  else title = 'Esta vez, sin podio.';
+  if (scenario === 'winner') title = t("Este reto es tuyo.");
+  else if (scenario === 'participant') title = winners.length === 1 ? t("{0} se lleva el primer puesto.", [personName(winners[0]!)]) : t("Un reto para recordar.");
+  else if (scenario === 'tie') title = t("La meta se comparte.");
+  else if (scenario === 'incomplete') title = t("Cerramos sin adivinar.");
+  else if (scenario === 'solo') title = t("Tu camino también cuenta.");
+  else title = t("Esta vez, sin podio.");
   const phrases = COMPLETION_PHRASES[scenario];
   const phrase = phrases[phraseIndex(`${input.challengeId}|${scenario}`, phrases.length)]!;
   const prizeText = input.prize?.trim() || 'el premio';
   const message = phrase.replace(/\{prize\}/g, () => prizeText);
-  const resultNote = 'Resultado guardado con los pasos recibidos durante el reto.'
-    + (result.hasMissingData ? ' Faltaron registros de participantes; no equivalen a cero pasos.' : '')
-    + (result.hasRedactions ? ' Algunos datos dejaron de compartirse y ya no se muestran.' : '');
+  const resultNote = t("Resultado guardado con los pasos recibidos durante el reto.")
+    + (result.hasMissingData ? t(" Faltaron registros de participantes; no equivalen a cero pasos.") : '')
+    + (result.hasRedactions ? t(" Algunos datos dejaron de compartirse y ya no se muestran.") : '');
   return {
     scenario, eyebrow: EYEBROWS[scenario], title, message, resultNote,
     groupSteps, ownSteps: me?.steps ?? null, ownRank: me?.rank ?? null,
